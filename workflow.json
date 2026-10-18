@@ -1,0 +1,560 @@
+{
+  "name": "Tendencias de la semana",
+  "nodes": [
+    {
+      "id": "5ce923c0-fd57-569d-a8c9-a726cd144bc1",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -460
+      ],
+      "parameters": {
+        "width": 620,
+        "height": 260,
+        "content": "## Tendencias de la semana\nCada lunes lee GitHub, Hacker News, Hugging Face y varios blogs, y un modelo de OpenAI elige las 5 tendencias más relevantes y te las manda por Telegram.\n\n**Antes de activarlo:**\n1. Credencial **OpenAI** en «Modelo».\n2. Credencial **Telegram** en «Enviar a Telegram» y tu **chat ID** en el campo Chat ID.\n3. Pulsa «Probar a mano»."
+      }
+    },
+    {
+      "id": "cc5ca3d3-d23c-5ec7-9dc8-293f0f806237",
+      "name": "Cada lunes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 8 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6283c1ed-4dae-5d60-b9b2-6f4bab2bb8b6",
+      "name": "Probar a mano",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "69e53e0a-d786-59e6-bf1c-06213f0968d2",
+      "name": "Hacker News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        -120
+      ],
+      "parameters": {
+        "url": "=https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=60&numericFilters=points%3E120,created_at_i%3E{{ Math.floor(Date.now() / 1000) - 7 * 86400 }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-weekly-trends"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "23dbe5bf-45d1-569e-8321-301f24fef4fc",
+      "name": "GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.github.com/search/repositories?q=created:%3E{{ new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10) }}&sort=stars&order=desc&per_page=30",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-weekly-trends"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "ffa2c0cc-8787-5074-bea3-ed3165a693e5",
+      "name": "Hugging Face",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        120
+      ],
+      "parameters": {
+        "url": "https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=25",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-weekly-trends"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "f572725c-629c-5a1b-958c-ade359f9035a",
+      "name": "RSS OpenAI",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        240
+      ],
+      "parameters": {
+        "url": "https://openai.com/news/rss.xml",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "5e3cdac8-a124-5705-b131-faaa2ef5b2fd",
+      "name": "RSS Hugging Face blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        350
+      ],
+      "parameters": {
+        "url": "https://huggingface.co/blog/feed.xml",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "166a7c6f-3011-5005-a827-2286e5159e31",
+      "name": "RSS GitHub blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        460
+      ],
+      "parameters": {
+        "url": "https://github.blog/feed/",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "f51bc874-38cd-5a52-a414-dec7f6df7437",
+      "name": "RSS TechCrunch IA",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        570
+      ],
+      "parameters": {
+        "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "336f1432-3b8d-573e-a9cb-e81ab0b3bce6",
+      "name": "RSS Search Engine Journal",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        680
+      ],
+      "parameters": {
+        "url": "https://www.searchenginejournal.com/feed/",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "17d4bf72-f627-5f9b-87b2-68f0ff4d9671",
+      "name": "Unir fuentes",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        560,
+        200
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 8
+      }
+    },
+    {
+      "id": "fb37d6a9-94fa-5fca-8eed-1d33a6b0a5fb",
+      "name": "Normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// Todas las fuentes al mismo formato: { fuente, titulo, enlace, senal, puntos, resumen }. Solo los últimos 8 días.\nconst limite = Date.now() - 8 * 86400000;\nconst host = u => (String(u || '').match(/^https?:\\/\\/([^\\/?#]+)/i) || [])[1] || '';\nconst salida = [];\nconst push = o => { if (o.titulo && o.enlace) salida.push({ json: o }); };\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  if (Array.isArray(j.hits)) {\n    for (const h of j.hits) push({ fuente: 'Hacker News', titulo: h.title, enlace: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,\n      senal: `${h.points} puntos en Hacker News`, puntos: Number(h.points) || 0, resumen: '' });\n  } else if (Array.isArray(j.items) && j.total_count !== undefined) {\n    for (const r of j.items) push({ fuente: 'GitHub', titulo: `${r.full_name}: ${r.description || ''}`.slice(0, 200), enlace: r.html_url,\n      senal: `${r.stargazers_count} estrellas en GitHub`, puntos: Math.round((Number(r.stargazers_count) || 0) / 10), resumen: r.language || '' });\n  } else if (j.id && j.likes !== undefined && j.downloads !== undefined) {\n    push({ fuente: 'Hugging Face', titulo: `Modelo ${j.id} (${j.pipeline_tag || 'IA'})`, enlace: `https://huggingface.co/${j.id}`,\n      senal: `${j.likes} me gusta en Hugging Face`, puntos: Number(j.trendingScore) || 0, resumen: '' });\n  } else if (j.link && j.title) {\n    const fecha = new Date(j.isoDate || j.pubDate || 0);\n    if (isNaN(fecha) || fecha.getTime() < limite) continue;\n    push({ fuente: host(j.link).replace(/^www\\./, ''), titulo: String(j.title).trim(), enlace: j.link, senal: '', puntos: 30,\n      resumen: String(j.contentSnippet || '').replace(/\\s+/g, ' ').slice(0, 250) });\n  }\n}\nreturn salida;"
+      }
+    },
+    {
+      "id": "1c8cdee3-960a-53ff-a065-6b595b3ecdeb",
+      "name": "Preparar lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// Las mejores de cada fuente en un solo texto numerado (una única llamada al modelo).\nconst porFuente = {};\nfor (const x of $input.all().map(i => i.json)) (porFuente[x.fuente] = porFuente[x.fuente] || []).push(x);\nconst lista = [];\nfor (const f of Object.keys(porFuente)) lista.push(...porFuente[f].sort((a, b) => b.puntos - a.puntos).slice(0, 12));\nif (!lista.length) return [];\nconst texto = lista.map((n, i) => `${i}. [${n.fuente}${n.senal ? ' · ' + n.senal : ''}] ${n.titulo} — ${n.enlace}${n.resumen ? ' — ' + n.resumen : ''}`).join('\\n');\nreturn [{ json: { texto } }];"
+      }
+    },
+    {
+      "id": "41557e0c-b64d-5fd9-8839-cee39d99d8a7",
+      "name": "Elegir tendencias",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1220,
+        200
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.texto }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "Eres un editor que sigue de cerca inteligencia artificial, automatización, marketing digital, desarrollo web y apps. De la lista numerada de esta semana, elige las 5 tendencias más relevantes y útiles (prefiere lanzamientos, herramientas nuevas y proyectos que se puedan usar; descarta rumores, finanzas y polémicas). Escribe en español, en texto plano para Telegram (sin Markdown ni emojis), con este formato para cada una:\n1. Título claro\nPor qué importa, en 2 frases, sin inventar nada que no esté en la lista.\nEnlace\n\nTermina con una línea: «La que más me interesa esta semana: …» y por qué, en una frase."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c33e1907-51a5-5dd0-a29b-141cd19316a2",
+      "name": "Modelo",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1220,
+        420
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-5.4-mini"
+        },
+        "options": {
+          "maxTokens": 1500
+        }
+      }
+    },
+    {
+      "id": "ad96fa09-395f-50c4-bb9f-c6dc2f97ca40",
+      "name": "Enviar a Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        200
+      ],
+      "parameters": {
+        "chatId": "TU_CHAT_ID",
+        "text": "={{ 'Tendencias de la semana\\n\\n' + $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada lunes": {
+      "main": [
+        [
+          {
+            "node": "Hacker News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GitHub",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hugging Face",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS OpenAI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Hugging Face blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS GitHub blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS TechCrunch IA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Search Engine Journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Probar a mano": {
+      "main": [
+        [
+          {
+            "node": "Hacker News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GitHub",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hugging Face",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS OpenAI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Hugging Face blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS GitHub blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS TechCrunch IA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Search Engine Journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Hugging Face": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "RSS OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "RSS Hugging Face blog": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "RSS GitHub blog": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "RSS TechCrunch IA": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "RSS Search Engine Journal": {
+      "main": [
+        [
+          {
+            "node": "Unir fuentes",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Modelo": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Elegir tendencias",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unir fuentes": {
+      "main": [
+        [
+          {
+            "node": "Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar": {
+      "main": [
+        [
+          {
+            "node": "Preparar lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar lista": {
+      "main": [
+        [
+          {
+            "node": "Elegir tendencias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir tendencias": {
+      "main": [
+        [
+          {
+            "node": "Enviar a Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "pinData": {}
+}
