@@ -1,7 +1,5 @@
 # n8n-weekly-trends
 
-> **EN** · n8n workflow template: every Monday it reads GitHub (new repos with the most stars), Hacker News (top stories), Hugging Face (trending models) and a few RSS feeds, lets an OpenAI model pick the 5 most relevant trends and sends you a short summary on Telegram. Official n8n nodes only. Docs below in Spanish.
-
 **Las 5 tendencias de la semana en IA, automatización, marketing y desarrollo, en tu Telegram cada lunes.** Sin abrir veinte pestañas.
 
 Es una plantilla para [n8n](https://n8n.io) que:
